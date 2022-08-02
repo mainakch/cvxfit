@@ -41,8 +41,8 @@ print 'Approximate value: ' + str(fit_object.evaluate(pt)[0])
 
 ## Authors
 
-This package was written and tested by Mainak Chowdhury, Alon Kipnis and Milind Rao.
+This package was originally written and tested by Mainak Chowdhury, Alon Kipnis and Milind Rao.
 
 ## Acknowledgements
 
-This package came out of a course project for EE364b at Stanford University, Spring 2013-14, taught by Prof. Stephen Boyd. We would like to thank all members of the awesome teaching staff for their useful feedback and constructive suggestions.
+This package came out of a course project for EE364b at Stanford University, Spring 2014, taught by Prof. Stephen Boyd. We would like to thank all members of the awesome teaching staff for their feedback and suggestions.
