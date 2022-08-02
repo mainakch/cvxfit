@@ -1,0 +1,33 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cvxfit"
+version = "0.1.10"
+description = "Fit convex approximations to samples of functions"
+readme = "README.md"
+authors = [
+    {name = "Mainak Chowdhury", email = "mainakch@gmail.com"},
+    {name = "Alon Kipnis", email = "alon.kipnis@idc.ac.il"},
+    {name = "Milind Rao", email = "milind@stanford.edu"}
+]
+maintainers = [
+    {name = "Mainak Chowdhury", email = "mainakch@gmail.com"}
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha"
+]
+keywords = ["convex", "approximation"]
+dependencies = [
+    "scipy",
+]
+requires-python = ">=3.6"
+
+[project.urls]
+Homepage = "https://github.com/mainakch/cvxfit"
