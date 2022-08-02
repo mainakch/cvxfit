@@ -373,7 +373,7 @@ class CvxFit:
     def _rnd_wd_pwl(self, pmf):
         """This returns a sample according to pmf."""
 
-        pmf = pmf / sp.sum(pmf)
+        pmf = pmf.flatten() / sp.sum(pmf)
         xk = sp.arange(self._N)
         _ = rv_discrete(name="custm", values=(xk, pmf))
         return _.rvs()
