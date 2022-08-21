@@ -69,6 +69,7 @@ class CvxFit:
            tol: Tolerance, opt., lower numbers give more accurate fit, but may take more time.
         """
 
+        self._type = type
         self._extra_param = extra_param
         if k is not None:
             self._extra_param[0] = k
@@ -95,7 +96,6 @@ class CvxFit:
             "pwq": self._fit_pwq,
             "soc": self._fit_soc,
         }
-        self.fit = dict_of_fitting_functions[type]
 
         # assign evaluate function
         dict_of_evaluate_functions = {
@@ -105,7 +105,7 @@ class CvxFit:
         }
         self.evaluate = dict_of_evaluate_functions[type]
  
-    def fit(self, X=X, y=Y):
+    def fit(self, X=[], y=[]):
         _ = np.array(X)
         __ = np.array(y).reshape(len(y), 1)
         self.pts = np.hstack((_, __))
@@ -114,7 +114,7 @@ class CvxFit:
 
         self._dim = self.pts.shape[1] - 1
         self._N = self.pts.shape[0]
-        return self.dict_of_fitting_functions[type]()
+        return self.dict_of_fitting_functions[self._type]()
 
     def _fit_pwl(self):
         """Fit a PWL function.
