@@ -33,8 +33,6 @@ class CvxFit:
 
     def __init__(
         self,
-        X=[],
-        Y=[],
         type="pwl",
         k=None,
         penalty="square",
@@ -47,9 +45,7 @@ class CvxFit:
         """This is the constructor for the CvxFit class.
 
         Args:
-            X: scipy.ndarray, each row of which represents a domain point.
-            Y: array_like, function values evaluated at corresponding domain points.
-            type: string,
+           type: string,
                 'pwl' for piecewise linear fits
                 'pwq' for piecewise quadratic fits.
            k: integer, opt., overrides extra_param[0] if provided
@@ -73,14 +69,7 @@ class CvxFit:
            tol: Tolerance, opt., lower numbers give more accurate fit, but may take more time.
         """
 
-        _ = np.array(X)
-        __ = np.array(Y).reshape(len(Y), 1)
-        self.pts = np.hstack((_, __))
-        self._orig_pts = self.pts.copy()
-        self._scale()
-
-        self._dim = self.pts.shape[1] - 1
-        self._N = self.pts.shape[0]
+        self._type = type
         self._extra_param = extra_param
         if k is not None:
             self._extra_param[0] = k
@@ -102,12 +91,11 @@ class CvxFit:
             self._loss = penalty_param
 
         # assign fitting function
-        dict_of_fitting_functions = {
+        self.dict_of_fitting_functions = {
             "pwl": self._fit_pwl,
             "pwq": self._fit_pwq,
             "soc": self._fit_soc,
         }
-        self.fit = dict_of_fitting_functions[type]
 
         # assign evaluate function
         dict_of_evaluate_functions = {
@@ -116,6 +104,17 @@ class CvxFit:
             "soc": self._eval_soc,
         }
         self.evaluate = dict_of_evaluate_functions[type]
+ 
+    def fit(self, X=[], y=[]):
+        _ = np.array(X)
+        __ = np.array(y).reshape(len(y), 1)
+        self.pts = np.hstack((_, __))
+        self._orig_pts = self.pts.copy()
+        self._scale()
+
+        self._dim = self.pts.shape[1] - 1
+        self._N = self.pts.shape[0]
+        return self.dict_of_fitting_functions[self._type]()
 
     def _fit_pwl(self):
         """Fit a PWL function.

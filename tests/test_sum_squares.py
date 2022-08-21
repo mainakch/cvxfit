@@ -23,10 +23,10 @@ def test_fit():
     # Initialize object with 10 affine functions
     # with regularization 0.001, and maximum
     # number of iterations 40.
-    fit_object = CvxFit(X=X, Y=Y, type="pwl", extra_param=[10, 0.001, 20])
+    fit_object = CvxFit(type="pwl", extra_param=[10, 0.001, 20])
     
     # Perform fit.
-    fit_object.fit()
+    fit_object.fit(X=X, y=Y)
     
     # See training error; repeat fit if high.
     print(f"Training error: {fit_object.mean_training_error}")
