@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cvxfit"
 version = "0.1.10"
-description = "Fit convex approximations to samples of functions"
+description = "Fit convex approximations to function samples"
 readme = "README.md"
 authors = [
     {name = "Mainak Chowdhury", email = "mainakch@gmail.com"},
@@ -26,6 +26,7 @@ classifiers = [
 keywords = ["convex", "approximation"]
 dependencies = [
     "scipy",
+    "numpy",
 ]
 requires-python = ">=3.6"
 

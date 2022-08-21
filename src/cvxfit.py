@@ -1,4 +1,5 @@
 import scipy as sp
+import numpy as np
 import time
 import pdb
 from scipy.stats import rv_discrete
@@ -72,9 +73,9 @@ class CvxFit:
            tol: Tolerance, opt., lower numbers give more accurate fit, but may take more time.
         """
 
-        _ = sp.array(X)
-        __ = sp.array(Y).reshape(len(Y), 1)
-        self.pts = sp.hstack((_, __))
+        _ = np.array(X)
+        __ = np.array(Y).reshape(len(Y), 1)
+        self.pts = np.hstack((_, __))
         self._orig_pts = self.pts.copy()
         self._scale()
 
@@ -135,7 +136,7 @@ class CvxFit:
         clst_id = self._assign_initial_clsts(centroids, pts)
 
         # print cluster_id
-        p_coeffs = sp.randn(num_clsts, self._dim + 1)
+        p_coeffs = np.random.randn(num_clsts, self._dim + 1)
         n_coeffs = p_coeffs.copy() + 1
         aval = self._mean_sq(n_coeffs - p_coeffs)
         max_iter = self._extra_param[2]
@@ -168,10 +169,10 @@ class CvxFit:
         pt = self._scale_input(pt_unscaled)
         coeffs = self._coeffs
         num_clsts = self._extra_param[0]
-        _ = sp.dot(coeffs[:, :-1], pt.transpose()) + sp.tile(
+        _ = np.dot(coeffs[:, :-1], pt.transpose()) + np.tile(
             coeffs[:, -1].reshape(num_clsts, 1), pt.shape[0]
         )
-        return self._std[-1] * sp.amax(_, axis=0) + self._mean[-1]
+        return self._std[-1] * np.amax(_, axis=0) + self._mean[-1]
 
     def _fit_pwq(self):
         """Fit a PWQ function.
@@ -194,23 +195,23 @@ class CvxFit:
 
         # Running k-means
         clst_identity = scvq.kmeans2(grid_pt, k)[1]
-        Pqr = sp.zeros([k, dim * (dim + 1) / 2 + dim + 1])
+        Pqr = np.zeros([k, dim * (dim + 1) / 2 + dim + 1])
 
         # Generating the grid for easy least squares estimation
-        X = sp.ones([N, Pqr.shape[1]])
+        X = np.ones([N, Pqr.shape[1]])
         X[:, -dim - 1 : -1] = grid_pt
-        Upp = sp.triu(sp.ones([dim, dim]))
+        Upp = np.triu(np.ones([dim, dim]))
         for ind in range(N):
-            temp = sp.dot(
-                sp.reshape(grid_pt[ind, :], [dim, 1]),
-                sp.reshape(grid_pt[ind, :], [1, dim]),
+            temp = np.dot(
+                np.reshape(grid_pt[ind, :], [dim, 1]),
+                np.reshape(grid_pt[ind, :], [1, dim]),
             )
             X[ind, 0 : dim * (dim + 1) / 2] = temp[Upp == 1]
 
         # Regularization parameter
-        mat = rho * sp.diagflat(
-            sp.concatenate(
-                (sp.ones([dim * (dim + 1) / 2, 1]), sp.zeros([dim + 1, 1])), 0
+        mat = rho * np.diagflat(
+            np.concatenate(
+                (np.ones([dim * (dim + 1) / 2, 1]), np.zeros([dim + 1, 1])), 0
             )
         )
 
@@ -223,17 +224,17 @@ class CvxFit:
             # Going through clusters
             for cl_ind in range(k):
                 pos_ind = clst_identity == cl_ind
-                if sp.sum(pos_ind) > 2:
-                    _ = sp.dot(X[pos_ind, :].T, X[pos_ind, :])
-                    __ = sp.dot(X[pos_ind, :].T, Y[pos_ind])
+                if np.sum(pos_ind) > 2:
+                    _ = np.dot(X[pos_ind, :].T, X[pos_ind, :])
+                    __ = np.dot(X[pos_ind, :].T, Y[pos_ind])
                     temp = lstsq(_ + mat, __)[0]
 
                     def f_obj(alpha):
                         alpha = alpha.reshape(dim * (dim + 1) / 2 + dim + 1, 1)
-                        _ = sp.dot(alpha.T, sp.dot(mat, alpha))
+                        _ = np.dot(alpha.T, np.dot(mat, alpha))
                         _ = (
-                            sp.sum(
-                                self._loss(sp.dot(X[pos_ind, :], alpha) - Y[pos_ind])
+                            np.sum(
+                                self._loss(np.dot(X[pos_ind, :], alpha) - Y[pos_ind])
                             )
                             + _
                         )
@@ -246,20 +247,20 @@ class CvxFit:
                         temp = res[0].reshape(len(temp), 1)
 
                         # Eliminating non-convexity
-                        Z = sp.zeros([dim, dim])
+                        Z = np.zeros([dim, dim])
                         Z[Upp == 1] = temp[: dim * (dim + 1) / 2, 0]
                         Z = 0.5 * (Z + Z.T)
-                        [_eval, evec] = sp.linalg.eigh(Z)
-                        _ = sp.diagflat(_eval * (_eval >= 0))
-                        Z = sp.dot(evec, sp.dot(_, evec.T))
-                        Z = 2 * Z - sp.diagflat(sp.diag(Z))
+                        [_eval, evec] = np.linalg.eigh(Z)
+                        _ = np.diagflat(_eval * (_eval >= 0))
+                        Z = np.dot(evec, np.dot(_, evec.T))
+                        Z = 2 * Z - np.diagflat(np.diag(Z))
                         temp[0 : dim * (dim + 1) / 2, 0] = Z[Upp == 1]
 
                     # Measuring change
-                    change = max(change, sp.linalg.norm(temp.T - Pqr[cl_ind, :]))
+                    change = max(change, np.linalg.norm(temp.T - Pqr[cl_ind, :]))
                     Pqr[cl_ind, :] = temp[:, 0]
 
-            clst_identity = sp.argmax(sp.dot(Pqr, X.T), 0)
+            clst_identity = np.argmax(np.dot(Pqr, X.T), 0)
             self._coeffs = Pqr
 
         self.mean_training_error = self.test_error(self._orig_pts) / (self._N + 0.0)
@@ -283,15 +284,15 @@ class CvxFit:
         Pqr = self._coeffs
         N = pt.shape[0]
         dim = pt.shape[1]
-        X = sp.ones([N, Pqr.shape[1]])
+        X = np.ones([N, Pqr.shape[1]])
         X[:, -dim - 1 : -1] = pt
-        Upp = sp.triu(sp.ones([dim, dim]))
+        Upp = np.triu(np.ones([dim, dim]))
         for ind in range(N):
-            _ = sp.reshape(pt[ind, :], [dim, 1])
-            __ = sp.reshape(pt[ind, :], [1, dim])
-            temp = sp.dot(_, __)
+            _ = np.reshape(pt[ind, :], [dim, 1])
+            __ = np.reshape(pt[ind, :], [1, dim])
+            temp = np.dot(_, __)
             X[ind, 0 : dim * (dim + 1) / 2] = temp[Upp == 1]
-        val = sp.max(sp.dot(Pqr, X.T), axis=0)
+        val = np.max(np.dot(Pqr, X.T), axis=0)
         return self._std[-1] * val + self._mean[-1]
 
     def _fit_soc(self):
@@ -313,9 +314,9 @@ class CvxFit:
             # there are no theoretical guarantees
             self._coeffs = coeffs
             _ = self._eval_soc(pts[:, :-1]) - pts[:, -1]
-            return sp.sum(self._loss(_))
+            return np.sum(self._loss(_))
 
-        _ = sp.randn(num_rows * dim + num_rows + dim + 1)
+        _ = np.random.randn(num_rows * dim + num_rows + dim + 1)
         res = bfgs(f_obj, _, approx_grad=1, factr=1e10, maxfun=100)
         self._coeffs = res[0]
         return res[0]
@@ -340,10 +341,10 @@ class CvxFit:
         e = coeffs[num_rows * dim + num_rows : num_rows * dim + dim + num_rows]
         f = coeffs[-1]
         pts_domain = pt.transpose()
-        _ = sp.dot(A, pts_domain)
-        __ = sp.tile(b.reshape(num_rows, 1), N)
-        _ = sp.sqrt(sp.sum((_ + __) ** 2, axis=0))
-        __ = sp.dot(e.reshape(1, dim), pts_domain)
+        _ = np.dot(A, pts_domain)
+        __ = np.tile(b.reshape(num_rows, 1), N)
+        _ = np.sqrt(np.sum((_ + __) ** 2, axis=0))
+        __ = np.dot(e.reshape(1, dim), pts_domain)
         _ = _ - __ - f
         return _
 
@@ -366,15 +367,15 @@ class CvxFit:
         if loss_function is None:
             loss_function = self._loss
         _ = self.evaluate(test_data[:, :-1])
-        return sp.sum(loss_function(_ - test_data[:, -1]))
+        return np.sum(loss_function(_ - test_data[:, -1]))
 
-    ##These are utility functions for pwl/pwq/soc modules
+    ## These are utility functions for pwl/pwq/soc modules
 
     def _rnd_wd_pwl(self, pmf):
         """This returns a sample according to pmf."""
 
-        pmf = pmf.flatten() / sp.sum(pmf)
-        xk = sp.arange(self._N)
+        pmf = pmf.flatten() / np.sum(pmf)
+        xk = np.arange(self._N)
         _ = rv_discrete(name="custm", values=(xk, pmf))
         return _.rvs()
 
@@ -386,23 +387,23 @@ class CvxFit:
         (__, dim) = list_centrs.shape
 
         pts_domain = pts[:, :-1]
-        _ = sp.tile(pts_domain, 1)
+        _ = np.tile(pts_domain, 1)
         _lc = list_centrs[num_centroids - 1, :].flatten()
-        __ = sp.tile(_lc, [N, 1])
+        __ = np.tile(_lc, [N, 1])
         _ = (_ - __) ** 2
-        _ = sp.reshape(_, (N, dim))
-        _ = sp.sum(_, axis=1)
-        _ = sp.reshape(_, (N, 1))
-        sq_distances = sp.minimum(pmf.reshape(N, 1), _)
+        _ = np.reshape(_, (N, dim))
+        _ = np.sum(_, axis=1)
+        _ = np.reshape(_, (N, 1))
+        sq_distances = np.minimum(pmf.reshape(N, 1), _)
         return sq_distances
 
     def _initialize_kmeans_plus_plus(self):
         """This returns list of centroids drawn via kmeans++."""
 
         num_clsts = self._extra_param[0]
-        list_centrs = sp.ones((num_clsts, self._dim))
-        pmf = (1e9) * sp.ones(self._N)
-        for ctr in sp.arange(num_clsts):
+        list_centrs = np.ones((num_clsts, self._dim))
+        pmf = (1e9) * np.ones(self._N)
+        for ctr in np.arange(num_clsts):
             list_centrs[ctr, :] = self.pts[self._rnd_wd_pwl(pmf), :-1]
             pmf = self._update_random_weights(list_centrs, ctr + 1, pmf)
         return list_centrs
@@ -416,15 +417,15 @@ class CvxFit:
 
         # Use array operations to compute distances efficiently
         _ = pts[:, :-1]
-        pts_repeated = sp.tile(_, num_centroids)
+        pts_repeated = np.tile(_, num_centroids)
         _ = list_centrs[0:num_centroids, :].flatten()
-        flat_centroid_repeated = sp.tile(_, [N, 1])
+        flat_centroid_repeated = np.tile(_, [N, 1])
         _ = pts_repeated - flat_centroid_repeated
         _ = _**2
-        _ = sp.reshape(_, (num_centroids * N, dim))
-        _ = sp.sum(_, axis=1)
-        _ = sp.reshape(_, (N, num_centroids))
-        indices = sp.argmin(_, axis=1)
+        _ = np.reshape(_, (num_centroids * N, dim))
+        _ = np.sum(_, axis=1)
+        _ = np.reshape(_, (N, num_centroids))
+        indices = np.argmin(_, axis=1)
         return indices
 
     def _assign_clsts(self, lst_coeffs):
@@ -443,15 +444,15 @@ class CvxFit:
 
         # Use array operations to compute dot products efficiently
         _ = pts[:, :-1]
-        _ = sp.hstack((_, sp.ones((N, 1)), -pts[:, -1].reshape(N, 1)))
-        _pt = sp.tile(_, num_clst)
-        _ = sp.hstack((lst_coeffs, sp.ones((num_clst, 1))))
+        _ = np.hstack((_, np.ones((N, 1)), -pts[:, -1].reshape(N, 1)))
+        _pt = np.tile(_, num_clst)
+        _ = np.hstack((lst_coeffs, np.ones((num_clst, 1))))
         _flt = _[0:num_clst, :].flatten()
-        _ = _pt * sp.tile(_flt, [N, 1])
-        _ = sp.reshape(_, (num_clst * N, dim + 2))
-        _ = sp.sum(_, axis=1)
-        _ = sp.reshape(_, (N, num_clst))
-        indices = sp.argmax(_, axis=1)
+        _ = _pt * np.tile(_flt, [N, 1])
+        _ = np.reshape(_, (num_clst * N, dim + 2))
+        _ = np.sum(_, axis=1)
+        _ = np.reshape(_, (N, num_clst))
+        indices = np.argmax(_, axis=1)
         return indices
 
     def _pwl_coeff_update(self, clst_identities, p_coeffs, lambd):
@@ -462,25 +463,25 @@ class CvxFit:
         (num_clst, _) = p_coeffs.shape
 
         def clst_updt(ctr):
-            _ = sp.where(clst_identities == ctr)[0]
+            _ = np.where(clst_identities == ctr)[0]
             clst_pts = pts[_, :]
 
             def f(coeffs):
-                _ = sp.dot(clst_pts[:, :-1], coeffs[:-1]) + coeffs[-1] - clst_pts[:, -1]
-                _loss = 0.5 * sp.sum(self._loss(_))
-                _reg = lambd / 2.0 * sp.sum(coeffs * coeffs)
+                _ = np.dot(clst_pts[:, :-1], coeffs[:-1]) + coeffs[-1] - clst_pts[:, -1]
+                _loss = 0.5 * np.sum(self._loss(_))
+                _reg = lambd / 2.0 * np.sum(coeffs * coeffs)
                 return _loss + _reg
 
             _ = p_coeffs[ctr, :]
             res = bfgs(f, _, fprime=None, approx_grad=1, factr=1e12, maxfun=20)
             return res[0]
 
-        n_coeffs = sp.array([clst_updt(ctr) for ctr in range(num_clst)])
+        n_coeffs = np.array([clst_updt(ctr) for ctr in range(num_clst)])
         return n_coeffs
 
     def _mean_sq(self, a):
         """This returns the mean square norm of a 2D scipy.ndarray."""
-        return sp.sum(a * a) / (0.0 + a.shape[0] * a.shape[1])
+        return np.sum(a * a) / (0.0 + a.shape[0] * a.shape[1])
 
     def _square(self, x):
         """Computes the elementwise square."""
@@ -490,8 +491,8 @@ class CvxFit:
     def _asymmetric_l1(self, x):
         """Computes elementwise asymmetric l1 norm."""
 
-        _plus = sp.maximum(x, 0)
-        _minus = sp.maximum(-x, 0)
+        _plus = np.maximum(x, 0)
+        _minus = np.maximum(-x, 0)
 
         if self._penalty_param is None:
             self._penalty_param = 1.0
@@ -505,29 +506,29 @@ class CvxFit:
         if self._penalty_param is None:
             self._penalty_param = 1
         delt = self._penalty_param
-        _quad = 0.5 * x * x * ((sp.absolute(x) < delt) + 0.0)
-        _lin = delt * (sp.absolute(x) - delt / 2.0) * ((sp.absolute(x) > delt) + 0.0)
+        _quad = 0.5 * x * x * ((np.absolute(x) < delt) + 0.0)
+        _lin = delt * (np.absolute(x) - delt / 2.0) * ((np.absolute(x) > delt) + 0.0)
         return _lin + _quad
 
     def _l1(self, x):
         """Computes the elementwise l1 norm."""
-        return sp.absolute(x)
+        return np.absolute(x)
 
     def _scale(self):
         """Normalize training data."""
 
-        self._mean = sp.mean(self.pts, axis=0)
-        self._std = sp.std(self.pts, axis=0)
-        self.pts = self.pts - sp.tile(self._mean, (self.pts.shape[0], 1))
-        _ = sp.tile(self._std, (self.pts.shape[0], 1))
+        self._mean = np.mean(self.pts, axis=0)
+        self._std = np.std(self.pts, axis=0)
+        self.pts = self.pts - np.tile(self._mean, (self.pts.shape[0], 1))
+        _ = np.tile(self._std, (self.pts.shape[0], 1))
         self.pts = self.pts / _
 
     def _scale_input(self, x):
         """Normalize test data."""
 
         dim = x.shape[1]
-        x = x - sp.tile(self._mean[:dim], (x.shape[0], 1))
-        _ = sp.tile(self._std[:dim], (x.shape[0], 1))
+        x = x - np.tile(self._mean[:dim], (x.shape[0], 1))
+        _ = np.tile(self._std[:dim], (x.shape[0], 1))
         x = x / _
         return x
 
@@ -535,16 +536,16 @@ class CvxFit:
 def main():
     N = 100
     dim = 4
-    coeffs_actual = sp.randn(17, dim + 1)
+    coeffs_actual = np.random.randn(17, dim + 1)
 
     def f_actual(x):
-        return sp.amax(
-            sp.dot(coeffs_actual[:, :-1], x.reshape(dim, 1)) + coeffs_actual[:, -1]
+        return np.amax(
+            np.dot(coeffs_actual[:, :-1], x.reshape(dim, 1)) + coeffs_actual[:, -1]
         )
 
-    X = sp.randn(N, dim)
-    Y = sp.array([f_actual(pt) for pt in list(X)])
-    # pts = sp.hstack((pts_tmp, sp.reshape(f_val, (N, 1))))
+    X = np.random.randn(N, dim)
+    Y = np.array([f_actual(pt) for pt in list(X)])
+    # pts = np.hstack((pts_tmp, np.reshape(f_val, (N, 1))))
 
     fit_object = CvxFit(X=X, Y=Y, type="pwl", extra_param=(2, 1e-2, 10))
     fit_object.fit()

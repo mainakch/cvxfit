@@ -18,6 +18,8 @@ jobs:
         pip install
         build
         --user
+    - name:
+      run: cd tests && pytest
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m
