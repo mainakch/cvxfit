@@ -107,7 +107,7 @@ class CvxFit:
  
     def fit(self, X=X, y=Y):
         _ = np.array(X)
-        __ = np.array(Y).reshape(len(Y), 1)
+        __ = np.array(y).reshape(len(y), 1)
         self.pts = np.hstack((_, __))
         self._orig_pts = self.pts.copy()
         self._scale()
